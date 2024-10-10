@@ -1,6 +1,8 @@
 import os
 import os.path as osp
 import glob
+from datetime import datetime
+
 import cv2
 import numpy as np
 import torch
@@ -9,8 +11,7 @@ sys.path.insert(0, '{0}/app'.format(os.path.dirname(__file__)))
 import RRDBNet_arch as arch
 
 # Settings
-model_path = 'models/RRDB_ESRGAN_x4.pth'  # models/RRDB_ESRGAN_x4.pth OR models/RRDB_PSNR_x4.pth
-# device = torch.device('cuda')  # if you want to run on CPU, change 'cuda' -> cpu
+model_path = 'models/RRDB_ESRGAN_x4.pth'
 device = torch.device('cpu')
 test_img_folder = 'LR/*'
 
@@ -45,19 +46,23 @@ def ESRGAN(img, model):
     return output
 
 
-print('Model path {:s}.'.format(model_path))
-MAXSIZE = 300
+print(f'Model path {model_path}.')
+MAXSIZE = 500
 for path in glob.glob(test_img_folder):
     base, ext = osp.splitext(osp.basename(path))
-    print('{0}{1}'.format(base, ext))
+    print(f'Read file {base}{ext}..')
+    start = datetime.now()
 
     if (ext in img_ext):
         # read images
         img = cv2.imread(path, cv2.IMREAD_COLOR)
         img = img if (MAXSIZE in img.shape) else ResizeImage(img, MAXSIZE)
-        cv2.imwrite('LR/{:s}.png'.format(base), img)
+        cv2.imwrite('LR-resize/{:s}.png'.format(base), img)
         output = ESRGAN(img, model)
         cv2.imwrite('results/{:s}.png'.format(base), output)
+
+        end = datetime.now()
+        print(f"{start} - {end} time used: {end - start}")
     elif (ext in vid_ext):
         # Read frames
         filename = "results/{:s}.avi".format(base)
